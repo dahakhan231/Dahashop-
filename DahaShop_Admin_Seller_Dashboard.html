@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DahaShop Admin & Seller Dashboard</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f5f7;color:#171717}
+nav{height:64px;background:#111;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 22px}
+.logo{font-size:24px;font-weight:800}.user{font-size:14px}
+.layout{display:flex;min-height:calc(100vh - 64px)}aside{width:230px;background:#fff;border-right:1px solid #ddd;padding:15px}
+aside button{width:100%;background:#fff;text-align:left;margin:4px 0;padding:12px;border-radius:8px}
+aside button.active{background:#111;color:#fff}
+main{flex:1;padding:25px;max-width:1400px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin:20px 0}.stat{background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px #0001}.stat b{font-size:25px;display:block;margin-top:8px}
+.card{background:#fff;border-radius:12px;padding:20px;margin-top:15px;box-shadow:0 2px 8px #0001}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:13px;border-bottom:1px solid #eee;font-size:14px}
+button{border:0;border-radius:7px;padding:10px 14px;font-weight:700;cursor:pointer}.primary{background:#111;color:#fff}.danger{background:#fee;color:#b00}.small{padding:6px 9px}
+input,select{padding:11px;width:100%;border:1px solid #ddd;border-radius:7px;margin:5px 0 12px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.product{border:1px solid #eee;padding:15px;border-radius:10px}
+.modal{display:none;position:fixed;inset:0;background:#0008;align-items:center;justify-content:center;padding:20px}.modalbox{background:#fff;border-radius:13px;padding:25px;width:100%;max-width:500px;max-height:90vh;overflow:auto}
+.notice{background:#fff8d9;padding:12px;border-radius:8px;margin-top:15px}
+@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr 1fr}aside{width:190px}}
+@media(max-width:600px){.layout{display:block}aside{width:100%;display:flex;overflow:auto}aside button{min-width:130px}.stats{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}main{padding:15px}table{font-size:12px}}
+</style>
+</head>
+<body>
+<nav><div class="logo">DahaShop</div><div class="user">Admin Dashboard · <button onclick="logout()">Logout</button></div></nav>
+<div class="layout">
+<aside>
+<button class="active" onclick="show('dashboard',this)">📊 Dashboard</button>
+<button onclick="show('products',this)">📦 Products</button>
+<button onclick="show('orders',this)">🛒 Orders</button>
+<button onclick="show('sellers',this)">🏪 Sellers</button>
+<button onclick="show('customers',this)">👤 Customers</button>
+<button onclick="show('settings',this)">⚙️ Settings</button>
+</aside>
+<main id="app"></main>
+</div>
+<div class="modal" id="modal"><div class="modalbox" id="modalbox"></div></div>
+
+<script>
+let data=JSON.parse(localStorage.getItem("dahaAdminData")||"null")||{
+products:[
+{id:1,name:"Wireless Headphones",price:4999,stock:25,seller:"Daha Electronics"},
+{id:2,name:"Smart Watch",price:3499,stock:18,seller:"Tech World"},
+{id:3,name:"Premium Shalwar Kameez",price:5999,stock:12,seller:"Daha Fashion"}
+],
+orders:[
+{id:"#DS1001",customer:"Ali Khan",total:8498,payment:"Cash on Delivery",status:"Pending"},
+{id:"#DS1002",customer:"Ahmed",total:5999,payment:"EasyPaisa",status:"Shipped"}
+],
+sellers:["Daha Electronics","Tech World","Daha Fashion"],
+customers:["Ali Khan","Ahmed","Murtaza"]
+};
+function save(){localStorage.setItem("dahaAdminData",JSON.stringify(data))}
+function show(page,btn){
+document.querySelectorAll("aside button").forEach(x=>x.classList.remove("active"));if(btn)btn.classList.add("active");
+if(page==="dashboard")dashboard(); if(page==="products")products(); if(page==="orders")orders(); if(page==="sellers")sellers();if(page==="customers")customers();if(page==="settings")settings();
+}
+function dashboard(){
+app.innerHTML=`<div class="top"><div><h1>Dashboard</h1><p>Manage your DahaShop marketplace.</p></div><button class="primary" onclick="openProduct()">+ Add Product</button></div>
+<div class="stats">
+<div class="stat">Products<b>${data.products.length}</b></div>
+<div class="stat">Orders<b>${data.orders.length}</b></div>
+<div class="stat">Sellers<b>${data.sellers.length}</b></div>
+<div class="stat">Customers<b>${data.customers.length}</b></div></div>
+<div class="card"><h2>Recent Orders</h2>${orderTable(5)}</div>
+<div class="notice">⚠️ This is a frontend demo. Real customer accounts, database, seller payouts and live EasyPaisa/JazzCash APIs require a backend and official payment credentials.</div>`;
+}
+function products(){
+app.innerHTML=`<div class="top"><div><h1>Products</h1><p>Add and manage seller products.</p></div><button class="primary" onclick="openProduct()">+ Add Product</button></div>
+<div class="card"><table><thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Seller</th><th>Action</th></tr></thead><tbody>
+${data.products.map(p=>`<tr><td>${p.name}</td><td>Rs. ${p.price.toLocaleString()}</td><td>${p.stock}</td><td>${p.seller}</td><td><button class="danger small" onclick="delProduct(${p.id})">Delete</button></td></tr>`).join("")}</tbody></table></div>`;
+}
+function orders(){
+app.innerHTML=`<div class="top"><h1>Orders</h1><button class="primary" onclick="newDemoOrder()">+ Demo Order</button></div><div class="card">${orderTable(100)}</div>`;
+}
+function orderTable(n){
+return `<table><thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Payment</th><th>Status</th><th>Action</th></tr></thead><tbody>
+${data.orders.slice(0,n).map((o,i)=>`<tr><td>${o.id}</td><td>${o.customer}</td><td>Rs. ${o.total.toLocaleString()}</td><td>${o.payment}</td><td><select onchange="status(${i},this.value)"><option ${o.status==="Pending"?"selected":""}>Pending</option><option ${o.status==="Shipped"?"selected":""}>Shipped</option><option ${o.status==="Delivered"?"selected":""}>Delivered</option><option ${o.status==="Cancelled"?"selected":""}>Cancelled</option></select></td><td><button class="small" onclick="viewOrder(${i})">View</button></td></tr>`).join("")}</tbody></table>`;
+}
+function sellers(){
+app.innerHTML=`<div class="top"><h1>Sellers</h1><button class="primary" onclick="addSeller()">+ Add Seller</button></div>
+<div class="grid">${data.sellers.map((s,i)=>`<div class="product"><h3>🏪 ${s}</h3><p class="muted">Seller ID: DS-S${100+i}</p><p>Active store</p><button class="danger small" onclick="removeSeller(${i})">Remove</button></div>`).join("")}</div>`;
+}
+function customers(){
+app.innerHTML=`<h1>Customers</h1><div class="card"><table><tr><th>Name</th><th>Status</th></tr>${data.customers.map(c=>`<tr><td>${c}</td><td>Active</td></tr>`).join("")}</table></div>`;
+}
+function settings(){
+app.innerHTML=`<h1>Settings</h1><div class="card"><h2>Store Settings</h2><label>Store Name</label><input value="DahaShop"><label>Currency</label><select><option>PKR (Rs.)</option><option>USD ($)</option></select><h3>Payment Methods</h3><p>✅ Cash on Delivery</p><p>🟢 EasyPaisa</p><p>🟢 JazzCash</p><button class="primary" onclick="alert('Settings saved in demo mode.')">Save Settings</button></div>`;
+}
+function openProduct(){
+modalbox.innerHTML=`<h2>Add Product</h2><label>Product Name</label><input id="pn" placeholder="e.g. Bluetooth Speaker"><label>Price (PKR)</label><input id="pp" type="number" placeholder="2500"><label>Stock</label><input id="ps" type="number" placeholder="10"><label>Seller</label><select id="pseller">${data.sellers.map(s=>`<option>${s}</option>`).join("")}</select><button class="primary" onclick="addProduct()">Save Product</button> <button onclick="closeModal()">Cancel</button>`;
+modal.style.display="flex";
+}
+function addProduct(){let n=pn.value.trim(),p=Number(pp.value),s=Number(ps.value);if(!n||!p){alert("Enter product name and price.");return}data.products.push({id:Date.now(),name:n,price:p,stock:s||0,seller:pseller.value});save();closeModal();products()}
+function delProduct(id){if(confirm("Delete this product?")){data.products=data.products.filter(p=>p.id!==id);save();products()}}
+function status(i,v){data.orders[i].status=v;save()}
+function viewOrder(i){let o=data.orders[i];alert(`Order ${o.id}\\nCustomer: ${o.customer}\\nTotal: Rs. ${o.total.toLocaleString()}\\nPayment: ${o.payment}\\nStatus: ${o.status}`)}
+function newDemoOrder(){data.orders.unshift({id:"#DS"+(1000+data.orders.length+1),customer:"New Customer",total:2499,payment:"JazzCash",status:"Pending"});save();orders()}
+function addSeller(){let s=prompt("Enter seller/shop name:");if(s){data.sellers.push(s);save();sellers()}}
+function removeSeller(i){if(confirm("Remove seller?")){data.sellers.splice(i,1);save();sellers()}}
+function closeModal(){modal.style.display="none"}
+function logout(){alert("Demo logout. Real authentication will be added with the backend.")}
+dashboard();
+</script>
+</body>
+</html>

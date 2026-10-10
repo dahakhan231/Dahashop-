@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DahaShop Login</title>
+<style>body{font-family:Arial;background:#f4f5f7;margin:0;display:grid;place-items:center;min-height:100vh}.box{background:white;padding:25px;border-radius:14px;width:min(420px,90%);box-shadow:0 5px 25px #0002}input,select,button{width:100%;padding:12px;margin:7px 0;border-radius:8px;border:1px solid #ddd;box-sizing:border-box}button{background:#111;color:#fff;font-weight:bold;cursor:pointer}.switch{text-align:center;color:#555;cursor:pointer}.hidden{display:none}.msg{padding:10px;background:#eee;border-radius:8px}</style></head>
+<body><div class="box"><h1>DahaShop</h1><p id="title">Create account</p>
+<div id="register"><input id="name" placeholder="Full name"><input id="email" type="email" placeholder="Email"><input id="password" type="password" placeholder="Password"><select id="role"><option value="customer">Customer</option><option value="seller">Seller</option></select><button onclick="register()">Create Account</button><p class="switch" onclick="toggle()">Already have an account? Login</p></div>
+<div id="login" class="hidden"><input id="lemail" type="email" placeholder="Email"><input id="lpassword" type="password" placeholder="Password"><button onclick="login()">Login</button><p class="switch" onclick="toggle()">Create a new account</p></div><div id="msg"></div></div>
+<script>
+const api="/api";
+function toggle(){registerBox.classList.toggle("hidden");loginBox.classList.toggle("hidden");title.textContent=loginBox.classList.contains("hidden")?"Create account":"Login"}
+const registerBox=document.getElementById("register"),loginBox=document.getElementById("login"),title=document.getElementById("title");
+async function register(){let r=await fetch(api+"/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:name.value,email:email.value,password:password.value,role:role.value})});let x=await r.json();msg(x)}
+async function login(){let r=await fetch(api+"/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:lemail.value,password:lpassword.value})});let x=await r.json();msg(x);if(x.token)localStorage.setItem("dahaToken",x.token)}
+function msg(x){document.getElementById("msg").textContent=x.error||"Success! Token saved. Connect this login to your storefront/dashboard."}
+</script></body></html>

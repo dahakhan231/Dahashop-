@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DahaShop — Online Marketplace</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f6f8;color:#171717}
+header{background:#111;color:#fff;padding:14px 5%;display:flex;align-items:center;gap:20px;position:sticky;top:0;z-index:10}
+.logo{font-size:25px;font-weight:800;color:#fff}.search{flex:1;max-width:650px;padding:12px 16px;border:0;border-radius:8px;font-size:15px}
+button{border:0;border-radius:8px;padding:11px 15px;font-weight:700;cursor:pointer}.cart{background:#fff;color:#111}
+.hero{padding:55px 5%;background:linear-gradient(120deg,#111,#343434);color:#fff}.hero h1{font-size:42px;margin:0 0 12px}.hero p{font-size:18px;color:#ddd;max-width:650px}
+.container{max-width:1200px;margin:auto;padding:30px 5%}.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.categories button{background:#fff;margin:3px;border:1px solid #ddd}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
+.card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px #00000012}.pic{height:180px;background:#e9eaed;display:flex;align-items:center;justify-content:center;font-size:60px}.cardbody{padding:15px}.price{font-size:20px;font-weight:800;margin:8px 0}.muted{color:#777;font-size:13px}.add{background:#111;color:#fff;width:100%;margin-top:10px}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:20;align-items:center;justify-content:center;padding:20px}.box{background:#fff;border-radius:15px;padding:25px;max-width:500px;width:100%;max-height:90vh;overflow:auto}.box h2{margin-top:0}
+input,select{width:100%;padding:12px;margin:7px 0 12px;border:1px solid #ddd;border-radius:8px}label{font-size:13px;font-weight:700}
+.row{display:flex;gap:10px}.row>*{flex:1}.close{float:right;background:#eee}.checkout{background:#111;color:#fff;width:100%;margin-top:12px}
+footer{background:#111;color:#bbb;text-align:center;padding:30px;margin-top:30px}
+@media(max-width:650px){header{flex-wrap:wrap}.search{order:3;flex-basis:100%;max-width:none}.hero h1{font-size:32px}.row{flex-direction:column}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">DahaShop</div>
+  <input id="search" class="search" placeholder="Search products..." oninput="renderProducts()">
+  <button class="cart" onclick="openCart()">🛒 Cart (<span id="count">0</span>)</button>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <h1>Everything you need, in one place.</h1>
+    <p>Shop products from independent sellers or start your own online store with DahaShop.</p>
+    <button onclick="openSeller()">🏪 Become a Seller</button>
+  </div>
+</section>
+
+<main class="container">
+  <div class="toolbar">
+    <h2>Featured Products</h2>
+    <div class="categories">
+      <button onclick="filterCat('All')">All</button>
+      <button onclick="filterCat('Electronics')">Electronics</button>
+      <button onclick="filterCat('Fashion')">Fashion</button>
+      <button onclick="filterCat('Home')">Home</button>
+    </div>
+  </div>
+  <div id="products" class="grid"></div>
+</main>
+
+<footer>DahaShop © 2026 — Multi-vendor marketplace demo</footer>
+
+<div id="modal" class="modal" onclick="if(event.target===this)closeModal()"><div class="box" id="box"></div></div>
+
+<script>
+const products=[
+{id:1,name:"Wireless Headphones",price:4999,cat:"Electronics",emoji:"🎧",seller:"Daha Electronics"},
+{id:2,name:"Smart Watch",price:3499,cat:"Electronics",emoji:"⌚",seller:"Tech World"},
+{id:3,name:"Premium Shalwar Kameez",price:5999,cat:"Fashion",emoji:"👔",seller:"Daha Fashion"},
+{id:4,name:"Men's Sneakers",price:4299,cat:"Fashion",emoji:"👟",seller:"Style Store"},
+{id:5,name:"Modern Table Lamp",price:2499,cat:"Home",emoji:"💡",seller:"Home Plus"},
+{id:6,name:"Coffee Maker",price:7999,cat:"Home",emoji:"☕",seller:"Home Plus"}
+];
+let cart=JSON.parse(localStorage.getItem("dahaCart")||"[]"), category="All";
+
+function money(n){return "Rs. "+n.toLocaleString()}
+function renderProducts(){
+ const q=document.getElementById("search").value.toLowerCase();
+ const list=products.filter(p=>(category==="All"||p.cat===category)&&p.name.toLowerCase().includes(q));
+ document.getElementById("products").innerHTML=list.map(p=>`
+ <div class="card"><div class="pic">${p.emoji}</div><div class="cardbody">
+ <div class="muted">${p.cat} · ${p.seller}</div><h3>${p.name}</h3><div class="price">${money(p.price)}</div>
+ <button class="add" onclick="add(${p.id})">Add to Cart</button></div></div>`).join("");
+}
+function filterCat(c){category=c;renderProducts()}
+function add(id){cart.push(products.find(p=>p.id===id));save();alert("Added to cart!")}
+function save(){localStorage.setItem("dahaCart",JSON.stringify(cart));document.getElementById("count").textContent=cart.length}
+function openCart(){
+ let total=cart.reduce((a,p)=>a+p.price,0);
+ document.getElementById("box").innerHTML=`<button class="close" onclick="closeModal()">✕</button><h2>Your Cart</h2>
+ ${cart.length?cart.map((p,i)=>`<p><b>${p.name}</b><br>${money(p.price)} <button onclick="removeItem(${i})">Remove</button></p>`).join(""):"<p>Your cart is empty.</p>"}
+ <hr><h3>Total: ${money(total)}</h3>${cart.length?`<button class="checkout" onclick="openCheckout()">Proceed to Checkout</button>`:""}`;
+ document.getElementById("modal").style.display="flex";
+}
+function removeItem(i){cart.splice(i,1);save();openCart()}
+function openCheckout(){
+ document.getElementById("box").innerHTML=`<button class="close" onclick="openCart()">←</button><h2>Checkout</h2>
+ <label>Full Name</label><input id="name" placeholder="Your name"><label>Phone</label><input id="phone" placeholder="03XXXXXXXXX">
+ <label>Delivery Address</label><input id="address" placeholder="Complete address">
+ <label>Payment Method</label><select id="pay"><option>Cash on Delivery</option><option>EasyPaisa</option><option>JazzCash</option></select>
+ <button class="checkout" onclick="placeOrder()">Place Order</button>`;
+}
+function placeOrder(){
+ if(!document.getElementById("name").value||!document.getElementById("phone").value||!document.getElementById("address").value){alert("Please fill all fields.");return}
+ const method=document.getElementById("pay").value;
+ alert("Order placed successfully! Payment method: "+method+"\\n\\nDemo checkout — real payment API can be connected later.");
+ cart=[];save();closeModal();
+}
+function openSeller(){
+ document.getElementById("box").innerHTML=`<button class="close" onclick="closeModal()">✕</button><h2>Start Selling on DahaShop</h2>
+ <p>Create your seller account and start building your store.</p>
+ <label>Shop Name</label><input placeholder="Your shop name">
+ <label>Your Name</label><input placeholder="Full name">
+ <label>Phone</label><input placeholder="03XXXXXXXXX">
+ <label>Password</label><input type="password" placeholder="Create password">
+ <button class="checkout" onclick="alert('Seller registration demo created! Backend/database will be connected in the next version.')">Create Seller Account</button>`;
+ document.getElementById("modal").style.display="flex";
+}
+function closeModal(){document.getElementById("modal").style.display="none"}
+renderProducts();save();
+</script>
+</body>
+</html>
